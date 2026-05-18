@@ -134,6 +134,8 @@ jobs:
           EXISTING_SHA=$(gh api \
             repos/"$REPO_PATH"/contents/.github/workflows/notify-parent.yml \
             --jq '.sha' 2>/dev/null || echo "")
+          # --jq returns literal "null" when field is absent — treat as empty
+          [ "$EXISTING_SHA" = "null" ] && EXISTING_SHA=""
 
           if [ -n "$EXISTING_SHA" ]; then
             echo "Updating existing notify-parent.yml in $REPO_PATH"
