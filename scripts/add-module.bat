@@ -28,7 +28,7 @@ echo   URL: %URL%
 echo.
 
 :: 1. Añadir como submódulo
-git submodule add %URL% %NAME%
+git submodule add -b main %URL% %NAME%
 git add .gitmodules %NAME%
 git commit -m "add %NAME% as submodule"
 
