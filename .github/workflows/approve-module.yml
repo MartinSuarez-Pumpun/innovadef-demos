@@ -115,14 +115,14 @@ jobs:
           REPO_URL: ${{ steps.parse.outputs.repo_url }}
           MODULE_NAME: ${{ steps.parse.outputs.module_name }}
         run: |
-          # Fail if folder already exists
-          if [ -d "$MODULE_NAME" ]; then
-            echo "::error::A module named '$MODULE_NAME' already exists in this repo"
-            exit 1
+          # Skip if already registered as submodule (idempotent re-run)
+          if grep -q "path = $MODULE_NAME" .gitmodules 2>/dev/null; then
+            echo "Submodule $MODULE_NAME already registered, skipping add"
+          else
+            git submodule add -b main "${REPO_URL}.git" "$MODULE_NAME"
+            git add .gitmodules "$MODULE_NAME"
+            git commit -m "feat: add $MODULE_NAME as submodule"
           fi
-          git submodule add -b main "${REPO_URL}.git" "$MODULE_NAME"
-          git add .gitmodules "$MODULE_NAME"
-          git commit -m "feat: add $MODULE_NAME as submodule"
 
       # ── 6. Copy notify-parent workflow into the contributor's repo ──────────
       - name: Install notify-parent workflow in child repo
@@ -170,7 +170,8 @@ jobs:
       # ── 8. Push parent changes ──────────────────────────────────────────────
       - name: Push to innovadef-demos
         run: |
-          git pull --rebase
+          git fetch origin
+          git rebase origin/main
           git push
 
       # ── 9. Update README table ──────────────────────────────────────────────
