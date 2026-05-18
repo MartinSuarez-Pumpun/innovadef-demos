@@ -10,6 +10,8 @@ body:
         **Requisito previo:** tu repositorio debe tener una rama `main` con el código listo y funcional.
         Cuando el propietario añada la etiqueta `approved`, el proceso de incorporación se ejecutará automáticamente.
 
+        **¿Repo privado?** Añade la cuenta `innovadef-org` como colaborador con rol **Write** en tu repo (Settings → Collaborators) antes de enviar esta solicitud. Sin ese acceso no es posible incorporar repos privados.
+
   - type: input
     id: repo_url
     attributes:
