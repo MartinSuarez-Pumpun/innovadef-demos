@@ -95,9 +95,15 @@ jobs:
 
           VISIBILITY=$(gh repo view "$REPO_PATH" --json visibility -q '.visibility')
           echo "Visibility: $VISIBILITY"
-          if [ "$VISIBILITY" != "PUBLIC" ]; then
-            echo "::error::El repositorio debe ser público para ser incorporado a InnovaDEF Demos"
+          PRIVATE_ALLOWED="${{ contains(github.event.issue.labels.*.name, 'private-allowed') }}"
+
+          if [ "$VISIBILITY" != "PUBLIC" ] && [ "$PRIVATE_ALLOWED" != "true" ]; then
+            echo "::error::El repositorio es privado. Para aceptar repos privados añade el label 'private-allowed' al issue (requiere que el contribuidor haya añadido la cuenta del bot como colaborador con rol Write)."
             exit 1
+          fi
+
+          if [ "$VISIBILITY" != "PUBLIC" ] && [ "$PRIVATE_ALLOWED" = "true" ]; then
+            echo "Repo privado aceptado con private-allowed."
           fi
 
       # ── 3. Checkout parent repo ─────────────────────────────────────────────

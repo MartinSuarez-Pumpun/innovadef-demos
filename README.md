@@ -89,6 +89,24 @@ Si ya tienes un repositorio construido y quieres añadirlo a la colección:
 
 A partir de ese momento, cualquier push a `main` en tu repo actualizará el submódulo aquí de forma automática.
 
+### Repos privados
+
+Por defecto solo se aceptan repos públicos. Para incorporar un repo privado (uso interno/empresa):
+
+1. El contribuidor añade la cuenta del bot como colaborador con rol **Write** en su repo (Settings → Collaborators)
+2. El propietario añade el label `private-allowed` al issue junto con `approved`
+
+---
+
+### Labels del sistema
+
+| Label | Color | Uso |
+|-------|-------|-----|
+| `nueva-demo` | azul | Se aplica automáticamente al abrir el issue desde la plantilla |
+| `approved` | verde | El propietario aprueba la solicitud → dispara la automatización |
+| `rejected` | rojo | El propietario rechaza la solicitud → cierra el issue con mensaje |
+| `private-allowed` | púrpura | Permite incorporar repos privados (requiere bot como colaborador) |
+
 ---
 
 ### Secrets requeridos en `innovadef-demos` (solo el propietario)
