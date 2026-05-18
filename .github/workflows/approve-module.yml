@@ -3,6 +3,12 @@ name: Approve module request
 on:
   issues:
     types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to approve'
+        required: true
+        type: number
 
 jobs:
   # ── Rejected: comment and close ──────────────────────────────────────────────
