@@ -133,23 +133,21 @@ jobs:
           # Check if file already exists to get its SHA (required for update)
           EXISTING_SHA=$(gh api \
             repos/"$REPO_PATH"/contents/.github/workflows/notify-parent.yml \
-            --jq '.sha' 2>/dev/null || true)
+            --jq '.sha' 2>/dev/null || echo "")
 
           if [ -n "$EXISTING_SHA" ]; then
             echo "Updating existing notify-parent.yml in $REPO_PATH"
             gh api repos/"$REPO_PATH"/contents/.github/workflows/notify-parent.yml \
               --method PUT \
-              --field message="ci: add notify-parent workflow for InnovaDEF sync" \
-              --field content="$CONTENT" \
-              --field sha="$EXISTING_SHA" \
-              --silent
+              --raw-field message="ci: add notify-parent workflow for InnovaDEF sync" \
+              --raw-field content="$CONTENT" \
+              --raw-field sha="$EXISTING_SHA"
           else
             echo "Creating notify-parent.yml in $REPO_PATH"
             gh api repos/"$REPO_PATH"/contents/.github/workflows/notify-parent.yml \
               --method PUT \
-              --field message="ci: add notify-parent workflow for InnovaDEF sync" \
-              --field content="$CONTENT" \
-              --silent
+              --raw-field message="ci: add notify-parent workflow for InnovaDEF sync" \
+              --raw-field content="$CONTENT"
           fi
 
       # ── 7. Inject PARENT_REPO_TOKEN secret into child repo ─────────────────
