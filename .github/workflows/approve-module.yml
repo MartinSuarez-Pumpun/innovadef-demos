@@ -169,7 +169,9 @@ jobs:
 
       # ── 8. Push parent changes ──────────────────────────────────────────────
       - name: Push to innovadef-demos
-        run: git push
+        run: |
+          git pull --rebase
+          git push
 
       # ── 9. Update README table ──────────────────────────────────────────────
       - name: Update README modules table
