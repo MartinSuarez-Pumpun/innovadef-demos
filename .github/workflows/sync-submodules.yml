@@ -1,0 +1,37 @@
+name: Sync submodules
+
+on:
+  # Se dispara cuando cualquier repo hijo hace push a main
+  repository_dispatch:
+    types: [submodule-push]
+  # También se puede lanzar manualmente desde Actions
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout padre (con submódulos)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configurar git
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Actualizar todos los submódulos al último commit de main
+        run: git submodule update --remote --merge
+
+      - name: Commit y push si hay cambios
+        run: |
+          git diff --quiet && git diff --staged --quiet || (
+            git add .
+            git commit -m "chore: sync submodules to latest [skip ci]"
+            git push
+          )
