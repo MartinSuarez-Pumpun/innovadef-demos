@@ -90,11 +90,15 @@ jobs:
           # Extract owner/repo from URL
           REPO_PATH=$(echo "$REPO_URL" | sed 's|https://github.com/||')
           echo "Checking: $REPO_PATH"
-          gh repo view "$REPO_PATH" --json name,defaultBranchRef > /dev/null \
+          gh repo view "$REPO_PATH" --json name,visibility > /dev/null \
             || { echo "::error::Repository not found or not accessible: $REPO_URL"; exit 1; }
-          # Confirm main branch exists
-          DEFAULT=$(gh repo view "$REPO_PATH" --json defaultBranchRef -q '.defaultBranchRef.name')
-          echo "Default branch: $DEFAULT"
+
+          VISIBILITY=$(gh repo view "$REPO_PATH" --json visibility -q '.visibility')
+          echo "Visibility: $VISIBILITY"
+          if [ "$VISIBILITY" != "PUBLIC" ]; then
+            echo "::error::El repositorio debe ser público para ser incorporado a InnovaDEF Demos"
+            exit 1
+          fi
 
       # ── 3. Checkout parent repo ─────────────────────────────────────────────
       - name: Checkout innovadef-demos
