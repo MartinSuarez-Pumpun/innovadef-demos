@@ -27,7 +27,7 @@ git submodule update --init --recursive
 
 ## Añadir un módulo
 
-El script añade el repo como submódulo, crea la rama `dev` y copia los workflows de CI/CD automáticamente.
+El script añade el repo como submódulo, crea la rama `dev` y copia el workflow de CI automáticamente.
 
 Mac / Linux / Windows (Git Bash):
 ```bash
@@ -38,16 +38,6 @@ Windows (CMD):
 ```bat
 scripts\add-module.bat https://github.com/MartinSuarez-Pumpun/nombre-del-repo.git
 ```
-
-### Activar el deploy a GitHub Pages (paso manual, una vez por módulo)
-
-Después de ejecutar el script, hay que habilitar GitHub Pages en el repo hijo:
-
-1. Ve a **Settings → Pages** en el repo del módulo
-2. En **Source**, selecciona **GitHub Actions**
-3. Guarda
-
-A partir de ese momento, cada merge a `main` despliega automáticamente.
 
 ### Proteger la rama main (recomendado)
 
@@ -64,8 +54,8 @@ Para que nadie pueda subir directamente a `main` sin pasar por `dev`:
 ## Flujo de trabajo en cada módulo
 
 ```
-rama dev  →  push  →  CI corre (build check)
-rama dev  →  PR → main  →  merge  →  Deploy a GitHub Pages
+rama dev  →  push  →  CI corre (build check, no está roto)
+rama dev  →  PR → main  →  merge  →  submódulo se sincroniza en el padre
 ```
 
 ---
