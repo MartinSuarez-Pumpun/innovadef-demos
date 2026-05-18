@@ -23,8 +23,14 @@ git submodule update --init --recursive
 
 ## Añadir un módulo
 
+Mac / Linux / Windows (Git Bash):
 ```bash
-node scripts/add-module.mjs https://github.com/MartinSuarez-Pumpun/nombre-del-repo.git
+./scripts/add-module.sh https://github.com/MartinSuarez-Pumpun/nombre-del-repo.git
+```
+
+Windows (CMD):
+```bat
+scripts\add-module.bat https://github.com/MartinSuarez-Pumpun/nombre-del-repo.git
 ```
 
 ## Solicitar un nuevo módulo
