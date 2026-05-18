@@ -2,3 +2,7 @@
 	path = demo-aerocognitio
 	url = https://github.com/MartinSuarez-Pumpun/demo-aerocognitio.git
 	branch = main
+[submodule "INNOVADEF-2026"]
+	path = INNOVADEF-2026
+	url = https://github.com/luismi7brmdz/INNOVADEF-2026.git
+	branch = main
