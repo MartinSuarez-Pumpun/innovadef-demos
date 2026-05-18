@@ -7,9 +7,7 @@ on:
 jobs:
   # ── Rejected: comment and close ──────────────────────────────────────────────
   reject:
-    if: |
-      github.event.label.name == 'rejected' &&
-      contains(github.event.issue.labels.*.name, 'nueva-demo')
+    if: github.event.label.name == 'rejected'
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -34,10 +32,8 @@ jobs:
 
   # ── Approved: full automation ─────────────────────────────────────────────────
   approve:
-    # Only run when the 'approved' label is added to a 'nueva-demo' issue
-    if: |
-      github.event.label.name == 'approved' &&
-      contains(github.event.issue.labels.*.name, 'nueva-demo')
+    # Only run when the 'approved' label is added to an issue
+    if: github.event.label.name == 'approved'
     runs-on: ubuntu-latest
     permissions:
       contents: write
