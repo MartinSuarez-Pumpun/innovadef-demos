@@ -54,7 +54,7 @@ body:
       options:
         - label: Mi repositorio tiene una rama `main` con el código listo
           required: true
-        - label: Mi repositorio es **público**
-          required: true
+        - label: Mi repositorio es **público** (si es privado, lee las instrucciones de arriba)
+          required: false
         - label: Entiendo que se añadirá un workflow de CI/CD a mi repo automáticamente
           required: true
