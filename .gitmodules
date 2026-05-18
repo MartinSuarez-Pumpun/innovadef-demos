@@ -1,0 +1,4 @@
+[submodule "demo-aerocognitio"]
+	path = demo-aerocognitio
+	url = https://github.com/MartinSuarez-Pumpun/demo-aerocognitio.git
+	branch = main
