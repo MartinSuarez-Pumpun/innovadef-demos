@@ -121,36 +121,29 @@ jobs:
       # ── 6. Copy notify-parent workflow into the contributor's repo ──────────
       - name: Install notify-parent workflow in child repo
         env:
-          GH_TOKEN: ${{ secrets.MODULES_TOKEN }}
+          MODULES_TOKEN: ${{ secrets.MODULES_TOKEN }}
           REPO_URL: ${{ steps.parse.outputs.repo_url }}
         run: |
           REPO_PATH=$(echo "$REPO_URL" | sed 's|https://github.com/||')
-          WORKFLOW_FILE="templates/workflows/notify-parent.yml"
 
-          # Encode file content in base64 for GitHub API
-          CONTENT=$(base64 -w0 < "$WORKFLOW_FILE")
+          # Clone child repo using token for auth
+          git clone \
+            "https://x-access-token:${MODULES_TOKEN}@github.com/${REPO_PATH}.git" \
+            /tmp/child-repo
 
-          # Check if file already exists to get its SHA (required for update)
-          EXISTING_SHA=$(gh api \
-            repos/"$REPO_PATH"/contents/.github/workflows/notify-parent.yml \
-            --jq '.sha' 2>/dev/null || echo "")
-          # --jq returns literal "null" when field is absent — treat as empty
-          [ "$EXISTING_SHA" = "null" ] && EXISTING_SHA=""
+          cd /tmp/child-repo
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          if [ -n "$EXISTING_SHA" ]; then
-            echo "Updating existing notify-parent.yml in $REPO_PATH"
-            gh api repos/"$REPO_PATH"/contents/.github/workflows/notify-parent.yml \
-              --method PUT \
-              --raw-field message="ci: add notify-parent workflow for InnovaDEF sync" \
-              --raw-field content="$CONTENT" \
-              --raw-field sha="$EXISTING_SHA"
-          else
-            echo "Creating notify-parent.yml in $REPO_PATH"
-            gh api repos/"$REPO_PATH"/contents/.github/workflows/notify-parent.yml \
-              --method PUT \
-              --raw-field message="ci: add notify-parent workflow for InnovaDEF sync" \
-              --raw-field content="$CONTENT"
-          fi
+          mkdir -p .github/workflows
+          cp "$GITHUB_WORKSPACE/templates/workflows/notify-parent.yml" \
+             .github/workflows/notify-parent.yml
+
+          git add .github/workflows/notify-parent.yml
+          # Commit only if there are changes
+          git diff --staged --quiet || \
+            git commit -m "ci: add notify-parent workflow for InnovaDEF sync"
+          git push
 
       # ── 7. Inject PARENT_REPO_TOKEN secret into child repo ─────────────────
       - name: Set PARENT_REPO_TOKEN secret in child repo
