@@ -73,6 +73,26 @@ rama dev  →  PR → main  →  merge  →  submódulo se sincroniza en el padr
 
 ---
 
-## Solicitar un nuevo módulo
+## Incorporar un módulo existente
 
-Abre un issue usando la plantilla **Nueva demo** en GitHub Issues.
+Si ya tienes un repositorio construido y quieres añadirlo a la colección:
+
+1. Abre un issue usando la plantilla **Añadir módulo existente**
+2. Rellena la URL de tu repo y el nombre de la carpeta
+3. El propietario revisará y añadirá la etiqueta `approved`
+4. El workflow se encarga de todo automáticamente:
+   - Añade tu repo como submódulo
+   - Instala el workflow de sync en tu repositorio
+   - Inyecta el secret `PARENT_REPO_TOKEN` en tu repo
+   - Actualiza este README
+
+A partir de ese momento, cualquier push a `main` en tu repo actualizará el submódulo aquí de forma automática.
+
+---
+
+### Secrets requeridos en `innovadef-demos` (solo el propietario)
+
+| Secret | Descripción |
+|--------|-------------|
+| `MODULES_TOKEN` | Classic PAT con scope `repo` — lee/escribe repos externos, inyecta secrets |
+| `CHILD_NOTIFY_TOKEN` | Fine-Grained PAT con Contents R/W solo en `innovadef-demos` — se inyecta como `PARENT_REPO_TOKEN` en cada módulo hijo |

@@ -1,0 +1,234 @@
+name: Approve module request
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  approve:
+    # Only run when the 'approved' label is added to a 'nueva-demo' issue
+    if: |
+      github.event.label.name == 'approved' &&
+      contains(github.event.issue.labels.*.name, 'nueva-demo')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      # ── 1. Parse the structured issue form body ─────────────────────────────
+      - name: Parse issue body
+        id: parse
+        env:
+          BODY: ${{ github.event.issue.body }}
+        run: |
+          # GitHub renders YAML form fields as:
+          #   ### Label
+          #   (blank line)
+          #   value
+          parse_field() {
+            local label="$1"
+            printf '%s' "$BODY" \
+              | grep -A3 "### ${label}" \
+              | grep -v "^###" \
+              | grep -v "^$" \
+              | head -1 \
+              | tr -d '\r' \
+              | xargs   # trim whitespace
+          }
+
+          REPO_URL=$(parse_field "URL del repositorio")
+          MODULE_NAME=$(parse_field "Nombre del módulo")
+
+          # Strip trailing .git if present, then re-add for git commands
+          REPO_URL="${REPO_URL%.git}"
+
+          echo "repo_url=${REPO_URL}"    >> $GITHUB_OUTPUT
+          echo "module_name=${MODULE_NAME}" >> $GITHUB_OUTPUT
+
+          if [ -z "$REPO_URL" ] || [ -z "$MODULE_NAME" ]; then
+            echo "::error::Could not parse repo_url or module_name from issue body"
+            exit 1
+          fi
+
+      # ── 2. Validate repo exists and is reachable ────────────────────────────
+      - name: Validate repository
+        env:
+          GH_TOKEN: ${{ secrets.MODULES_TOKEN }}
+          REPO_URL: ${{ steps.parse.outputs.repo_url }}
+        run: |
+          # Extract owner/repo from URL
+          REPO_PATH=$(echo "$REPO_URL" | sed 's|https://github.com/||')
+          echo "Checking: $REPO_PATH"
+          gh repo view "$REPO_PATH" --json name,defaultBranchRef > /dev/null \
+            || { echo "::error::Repository not found or not accessible: $REPO_URL"; exit 1; }
+          # Confirm main branch exists
+          DEFAULT=$(gh repo view "$REPO_PATH" --json defaultBranchRef -q '.defaultBranchRef.name')
+          echo "Default branch: $DEFAULT"
+
+      # ── 3. Checkout parent repo ─────────────────────────────────────────────
+      - name: Checkout innovadef-demos
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.MODULES_TOKEN }}
+          fetch-depth: 0
+
+      # ── 4. Configure git ────────────────────────────────────────────────────
+      - name: Configure git
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      # ── 5. Add as submodule ─────────────────────────────────────────────────
+      - name: Add submodule
+        env:
+          REPO_URL: ${{ steps.parse.outputs.repo_url }}
+          MODULE_NAME: ${{ steps.parse.outputs.module_name }}
+        run: |
+          # Fail if folder already exists
+          if [ -d "$MODULE_NAME" ]; then
+            echo "::error::A module named '$MODULE_NAME' already exists in this repo"
+            exit 1
+          fi
+          git submodule add -b main "${REPO_URL}.git" "$MODULE_NAME"
+          git add .gitmodules "$MODULE_NAME"
+          git commit -m "feat: add $MODULE_NAME as submodule"
+
+      # ── 6. Copy notify-parent workflow into the contributor's repo ──────────
+      - name: Install notify-parent workflow in child repo
+        env:
+          GH_TOKEN: ${{ secrets.MODULES_TOKEN }}
+          REPO_URL: ${{ steps.parse.outputs.repo_url }}
+        run: |
+          REPO_PATH=$(echo "$REPO_URL" | sed 's|https://github.com/||')
+          WORKFLOW_FILE="templates/workflows/notify-parent.yml"
+
+          # Encode file content in base64 for GitHub API
+          CONTENT=$(base64 -w0 < "$WORKFLOW_FILE")
+
+          # Check if file already exists to get its SHA (required for update)
+          EXISTING_SHA=$(gh api \
+            repos/"$REPO_PATH"/contents/.github/workflows/notify-parent.yml \
+            --jq '.sha' 2>/dev/null || true)
+
+          if [ -n "$EXISTING_SHA" ]; then
+            echo "Updating existing notify-parent.yml in $REPO_PATH"
+            gh api repos/"$REPO_PATH"/contents/.github/workflows/notify-parent.yml \
+              --method PUT \
+              --field message="ci: add notify-parent workflow for InnovaDEF sync" \
+              --field content="$CONTENT" \
+              --field sha="$EXISTING_SHA" \
+              --silent
+          else
+            echo "Creating notify-parent.yml in $REPO_PATH"
+            gh api repos/"$REPO_PATH"/contents/.github/workflows/notify-parent.yml \
+              --method PUT \
+              --field message="ci: add notify-parent workflow for InnovaDEF sync" \
+              --field content="$CONTENT" \
+              --silent
+          fi
+
+      # ── 7. Inject PARENT_REPO_TOKEN secret into child repo ─────────────────
+      - name: Set PARENT_REPO_TOKEN secret in child repo
+        env:
+          GH_TOKEN: ${{ secrets.MODULES_TOKEN }}
+          REPO_URL: ${{ steps.parse.outputs.repo_url }}
+          # This is the token the child will use to notify the parent.
+          # Store a dedicated Fine-Grained PAT (Contents R/W on innovadef-demos)
+          # as CHILD_NOTIFY_TOKEN in innovadef-demos secrets.
+          SECRET_VALUE: ${{ secrets.CHILD_NOTIFY_TOKEN }}
+        run: |
+          REPO_PATH=$(echo "$REPO_URL" | sed 's|https://github.com/||')
+          gh secret set PARENT_REPO_TOKEN \
+            --repo "$REPO_PATH" \
+            --body "$SECRET_VALUE"
+          echo "PARENT_REPO_TOKEN injected into $REPO_PATH"
+
+      # ── 8. Push parent changes ──────────────────────────────────────────────
+      - name: Push to innovadef-demos
+        run: git push
+
+      # ── 9. Update README table ──────────────────────────────────────────────
+      - name: Update README modules table
+        env:
+          MODULE_NAME: ${{ steps.parse.outputs.module_name }}
+          REPO_URL: ${{ steps.parse.outputs.repo_url }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          # Extract short description from issue
+          DESC=$(printf '%s' "$ISSUE_BODY" \
+            | grep -A3 "### Descripción" \
+            | grep -v "^###" | grep -v "^$" | head -1 | tr -d '\r' | xargs)
+          [ -z "$DESC" ] && DESC="Módulo demo"
+
+          # Insert new row before the closing --- separator
+          NEW_ROW="| [${MODULE_NAME}](./${MODULE_NAME}) | ${DESC} | ✅ Activo |"
+          # Append to the table (find last | line and insert after)
+          python3 - <<PYEOF
+          import re, os
+          path = 'README.md'
+          content = open(path).read()
+          # Find the table block and append the new row before the first ---
+          new_row = os.environ['NEW_ROW']
+          # Insert before the first horizontal rule after the table header
+          updated = re.sub(
+              r'(\| \[.*\] \|.*\| ✅.*\|)\n\n---',
+              rf'\1\n{new_row}\n\n---',
+              content
+          )
+          if updated == content:
+              # Table might not match pattern if it's the first real entry after header
+              updated = content.replace(
+                  '| [demo-aerocognitio]',
+                  f'{new_row}\n| [demo-aerocognitio]'
+              )
+          open(path, 'w').write(updated)
+          PYEOF
+
+          git add README.md
+          git diff --staged --quiet || git commit -m "docs: add $MODULE_NAME to README"
+          git push || true
+
+      # ── 10. Comment and close issue ─────────────────────────────────────────
+      - name: Comment success and close issue
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MODULE_NAME: ${{ steps.parse.outputs.module_name }}
+          REPO_URL: ${{ steps.parse.outputs.repo_url }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "$(cat <<EOF
+          ## ✅ Módulo incorporado
+
+          El módulo **\`${MODULE_NAME}\`** ha sido añadido correctamente a InnovaDEF Demos.
+
+          **Lo que se ha configurado automáticamente:**
+          - Submódulo añadido en \`innovadef-demos\`
+          - Workflow \`notify-parent.yml\` instalado en tu repositorio
+          - Secret \`PARENT_REPO_TOKEN\` inyectado en tu repositorio
+
+          **Próximos pasos (opcionales pero recomendados):**
+          1. Protege la rama \`main\` en tu repo → Settings → Branches → Add rule → Require PR
+          2. Crea una rama \`dev\` para desarrollar y abre PRs hacia \`main\` para publicar
+
+          Cualquier push futuro a \`main\` en tu repo actualizará automáticamente el submódulo aquí.
+          EOF
+          )"
+          gh issue close "$ISSUE_NUMBER" --reason completed
+
+      - name: Comment failure and close issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "$(cat <<EOF
+          ## ❌ Error en la incorporación
+
+          Se produjo un error al intentar añadir el módulo. Revisa los logs del workflow para más detalles:
+          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          Por favor corrige el problema y pide al propietario que vuelva a añadir la etiqueta \`approved\`.
+          EOF
+          )"

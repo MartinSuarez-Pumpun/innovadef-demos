@@ -1,0 +1,56 @@
+name: Añadir módulo existente
+description: Solicita la incorporación de tu repositorio ya creado a la colección InnovaDEF Demos
+title: "[MÓDULO] "
+labels: ["nueva-demo"]
+assignees: MartinSuarez-Pumpun
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Requisito previo:** tu repositorio debe tener una rama `main` con el código listo y funcional.
+        Cuando el propietario añada la etiqueta `approved`, el proceso de incorporación se ejecutará automáticamente.
+
+  - type: input
+    id: repo_url
+    attributes:
+      label: URL del repositorio
+      description: URL completa de tu repo de GitHub
+      placeholder: "https://github.com/usuario/demo-mi-modulo"
+    validations:
+      required: true
+
+  - type: input
+    id: module_name
+    attributes:
+      label: Nombre del módulo (carpeta)
+      description: Nombre corto sin espacios. Se usará como nombre de la subcarpeta en el repo padre.
+      placeholder: "demo-mi-modulo"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Descripción
+      description: ¿Qué hace este módulo? ¿Qué concepto ilustra o qué problema resuelve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: stack
+    attributes:
+      label: Stack tecnológico
+      description: React, Three.js, Python, Unity...
+      placeholder: "React + Vite, Three.js, xAI API..."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmacion
+    attributes:
+      label: Confirmación
+      options:
+        - label: Mi repositorio tiene una rama `main` con el código listo
+          required: true
+        - label: Entiendo que se añadirá un workflow de CI/CD a mi repo automáticamente
+          required: true
