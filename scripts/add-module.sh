@@ -37,8 +37,8 @@ git checkout -b dev 2>/dev/null || git checkout dev
 
 # Copiar plantillas de workflows
 mkdir -p .github/workflows
-cp "$ROOT_DIR/templates/workflows/ci.yml"     .github/workflows/ci.yml
-cp "$ROOT_DIR/templates/workflows/deploy.yml" .github/workflows/deploy.yml
+cp "$ROOT_DIR/templates/workflows/ci.yml"             .github/workflows/ci.yml
+cp "$ROOT_DIR/templates/workflows/notify-parent.yml"  .github/workflows/notify-parent.yml
 
 git add .github
 git commit -m "add CI/CD workflows (ci → dev, deploy → main)"

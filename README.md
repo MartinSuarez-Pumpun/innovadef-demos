@@ -39,6 +39,19 @@ Windows (CMD):
 scripts\add-module.bat https://github.com/MartinSuarez-Pumpun/nombre-del-repo.git
 ```
 
+### Añadir el secret para sincronizar con el padre (obligatorio)
+
+El workflow `notify-parent.yml` necesita un token para poder avisar al repo padre:
+
+1. Crea un **Fine-grained token** en GitHub → Settings → Developer settings → Personal access tokens
+   - Repository access: solo `innovadef-demos`
+   - Permissions: `Actions` → Read & Write
+2. En el repo del módulo ve a **Settings → Secrets and variables → Actions → New repository secret**
+   - Name: `PARENT_REPO_TOKEN`
+   - Value: el token creado
+
+Sin este secret el sync no funciona.
+
 ### Proteger la rama main (recomendado)
 
 Para que nadie pueda subir directamente a `main` sin pasar por `dev`:
