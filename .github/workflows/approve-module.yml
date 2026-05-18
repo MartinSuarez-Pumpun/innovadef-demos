@@ -185,7 +185,7 @@ jobs:
           [ -z "$DESC" ] && DESC="Módulo demo"
 
           # Insert new row before the closing --- separator
-          NEW_ROW="| [${MODULE_NAME}](./${MODULE_NAME}) | ${DESC} | ✅ Activo |"
+          export NEW_ROW="| [${MODULE_NAME}](./${MODULE_NAME}) | ${DESC} | ✅ Activo |"
           # Append to the table (find last | line and insert after)
           python3 - <<PYEOF
           import re, os
