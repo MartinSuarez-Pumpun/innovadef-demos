@@ -5,6 +5,34 @@ on:
     types: [labeled]
 
 jobs:
+  # ── Rejected: comment and close ──────────────────────────────────────────────
+  reject:
+    if: |
+      github.event.label.name == 'rejected' &&
+      contains(github.event.issue.labels.*.name, 'nueva-demo')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Comment and close
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" \
+            --repo "${{ github.repository }}" \
+            --body "## ❌ Solicitud rechazada
+
+          Gracias por tu interés en contribuir a InnovaDEF Demos.
+
+          Tu solicitud no ha podido ser aceptada en este momento. Si tienes dudas o quieres más información, responde en este issue antes de que se cierre.
+
+          Puedes volver a abrir una nueva solicitud en el futuro si realizas los ajustes necesarios."
+          gh issue close "$ISSUE_NUMBER" \
+            --repo "${{ github.repository }}" \
+            --reason "not planned"
+
+  # ── Approved: full automation ─────────────────────────────────────────────────
   approve:
     # Only run when the 'approved' label is added to a 'nueva-demo' issue
     if: |
