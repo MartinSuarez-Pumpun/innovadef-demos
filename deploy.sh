@@ -1,0 +1,23 @@
+#!/bin/bash
+# deploy.sh — actualiza y rebuilds INNOVADEF-2026 en producción
+# Uso: bash deploy.sh
+set -e
+
+echo "→ Pulling latest changes..."
+git pull
+
+echo "→ Updating submodules..."
+git submodule update --remote --merge
+
+echo "→ Installing plugin dependencies..."
+for dir in demo-aerocognitio; do
+  if [ -d "$dir" ] && [ -f "$dir/package.json" ]; then
+    echo "  pnpm install in $dir"
+    (cd "$dir" && pnpm install)
+  fi
+done
+
+echo "→ Building INNOVADEF-2026..."
+(cd INNOVADEF-2026 && pnpm install && pnpm build)
+
+echo "✓ Deploy done. Dist: INNOVADEF-2026/dist"
