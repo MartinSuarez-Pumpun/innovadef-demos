@@ -25,7 +25,7 @@ body:
     id: module_name
     attributes:
       label: Nombre del módulo (carpeta)
-      description: Nombre corto sin espacios. Se usará como nombre de la subcarpeta en el repo padre.
+      description: "**Debe empezar por `demo-`** (ej: `demo-mi-modulo`). Es la convención que usa el sistema de auto-discovery — sin el prefijo el módulo no aparecerá en el dashboard."
       placeholder: "demo-mi-modulo"
     validations:
       required: true
@@ -53,6 +53,8 @@ body:
       label: Confirmación
       options:
         - label: Mi repositorio tiene una rama `main` con el código listo
+          required: true
+        - label: El nombre de la carpeta empieza por `demo-`
           required: true
         - label: Mi repositorio es **público** (si es privado, lee las instrucciones de arriba)
           required: false
