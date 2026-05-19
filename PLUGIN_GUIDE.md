@@ -1,6 +1,6 @@
 # Guía de desarrollo de plugins — INNOVADEF
 
-Cualquier módulo nuevo que aparezca en el selector del dashboard es un **plugin**. Esta guía explica cómo crear uno desde cero, registrarlo, y probarlo en local.
+Cualquier módulo nuevo que aparezca en el selector del dashboard es un **plugin**. Esta guía explica cómo crear uno desde cero y cómo integrarlo.
 
 ---
 
@@ -26,8 +26,7 @@ export default function MiModulo({ onComplete }) {
   const handleFinish = () => {
     onComplete({
       type: 'mi-modulo',
-      // cualquier dato de resultado que necesites
-      score: 87,
+      score: 87, // cualquier dato de resultado
     })
   }
 
@@ -40,14 +39,13 @@ export default function MiModulo({ onComplete }) {
 }
 ```
 
-**Regla única:** el componente recibe `onComplete(result)` y lo llama cuando el usuario termina. El dashboard se encarga del resto (transición a email, vuelta al selector, etc.).
+**Regla única:** el componente recibe `onComplete(result)` y lo llama cuando el usuario termina.
 
 ### 2. Registrarlo
 
 Añade una entrada en `INNOVADEF-2026/src/plugins/registry.js`:
 
 ```js
-import { lazy } from 'react'
 import { MiIcono } from 'lucide-react'   // cualquier icono de lucide-react
 
 {
@@ -71,31 +69,50 @@ import { MiIcono } from 'lucide-react'   // cualquier icono de lucide-react
 
 ## Opción B — Plugin externo (repo independiente)
 
-Usa esta opción cuando el plugin tiene su propio repo, equipo o dependencias pesadas.
+> El sistema auto-descubre plugins externos. **No hay que tocar `vite.config.js` ni `registry.js`.**
+> Un tercero solo necesita: su propio repo + `plugin.json` + `src/plugin.jsx`.
 
 ### 1. Estructura del repo del plugin
 
 ```
-mi-plugin/
+demo-mi-plugin/
 ├── src/
 │   ├── plugin.jsx      ← entry point obligatorio
 │   ├── plugin.css      ← estilos aislados (ver sección CSS)
 │   └── ...             ← resto de la app
-├── plugin.json         ← manifiesto
+├── plugin.json         ← manifiesto (campos requeridos abajo)
 └── package.json
 ```
 
-### 2. Entry point (`src/plugin.jsx`)
+### 2. Manifiesto (`plugin.json`)
+
+Todos los campos son obligatorios:
+
+```json
+{
+  "id": "mi-plugin",
+  "version": "1.0.0",
+  "code": "MOD-10",
+  "label": "NOMBRE EN MAYÚS",
+  "desc": "DESCRIPCIÓN CORTA — VISIBLE EN LA CARD DEL SELECTOR",
+  "icon": "Rocket",
+  "color": "#FF6644",
+  "category": "simulación",
+  "tag": "ETIQUETA",
+  "duration": "~4 MIN",
+  "status": "ACTIVO",
+  "entry": "src/plugin.jsx"
+}
+```
+
+El campo `icon` debe ser el nombre exacto de un componente de [lucide-react](https://lucide.dev/icons/).
+
+### 3. Entry point (`src/plugin.jsx`)
 
 ```jsx
 import './plugin.css'
 import MiApp from './MiApp'
 
-/**
- * onComplete(result) — llámalo cuando el usuario termine.
- * pluginMode={true}  — desactiva elementos fixed-position propios
- *                      que chocarían con el HUD del dashboard.
- */
 export default function MiPlugin({ onComplete }) {
   return (
     <div className="mi-plugin">
@@ -105,17 +122,18 @@ export default function MiPlugin({ onComplete }) {
 }
 ```
 
-### 3. Aislamiento de CSS (`src/plugin.css`)
+`pluginMode={true}` desactiva elementos `position: fixed` propios que chocarían con el HUD del dashboard.
 
-El dashboard define sus variables en `:root`. Tu plugin debe redefinirlas en su propio wrapper para no depender de que el dashboard las cargue:
+### 4. Aislamiento de CSS (`src/plugin.css`)
+
+El dashboard define sus variables en `:root`. Tu plugin debe redefinirlas en su propio wrapper:
 
 ```css
 .mi-plugin {
-  /* Redefine aquí las variables CSS que uses */
   --bg: #070707;
   --accent: #00FF41;
   --border: rgba(0, 255, 65, 0.22);
-  /* ... */
+  /* resto de variables que uses */
 
   width: 100%;
   min-height: 100%;
@@ -123,7 +141,7 @@ El dashboard define sus variables en `:root`. Tu plugin debe redefinirlas en su 
   flex-direction: column;
 }
 
-/* Si tu app tiene un shell con height: 100svh, sobrescríbelo */
+/* Si tu app tiene height: 100svh en el shell, sobrescríbelo */
 .mi-plugin .app-shell {
   height: auto;
   min-height: 100%;
@@ -131,53 +149,21 @@ El dashboard define sus variables en `:root`. Tu plugin debe redefinirlas en su 
 }
 ```
 
-### 4. Manifiesto (`plugin.json`)
+### 5. Añadirlo como submodulo
 
-```json
-{
-  "id": "mi-plugin",
-  "version": "1.0.0",
-  "label": "NOMBRE EN MAYÚS",
-  "desc": "DESCRIPCIÓN CORTA",
-  "category": "simulación",
-  "tag": "ETIQUETA",
-  "duration": "~4 MIN",
-  "color": "#FF6644",
-  "status": "ACTIVO",
-  "entry": "src/plugin.jsx"
-}
-```
-
-### 5. Añadirlo como submodulo de `innovadef-demos`
+Esto lo hace quien gestiona `innovadef-demos`, no el autor del plugin:
 
 ```bash
 cd innovadef-demos
 git submodule add https://github.com/org/mi-plugin.git demo-mi-plugin
-git submodule update --init
+git add .gitmodules demo-mi-plugin
+git commit -m "feat: add demo-mi-plugin submodule"
+git push
 ```
 
-### 6. Añadir el alias en `INNOVADEF-2026/vite.config.js`
+**El directorio debe empezar por `demo-`** — es la convención que usa el auto-discovery.
 
-```js
-resolve: {
-  alias: {
-    '@aerocognitio': path.resolve(__dirname, '../demo-aerocognitio/src'),
-    '@mi-plugin':    path.resolve(__dirname, '../demo-mi-plugin/src'),  // ← añadir
-  },
-  dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
-},
-```
-
-### 7. Registrarlo en `registry.js`
-
-```js
-{
-  id: 'mi-plugin',
-  code: 'MOD-10',
-  // ...
-  component: lazy(() => import('@mi-plugin/plugin')),
-},
-```
+**Listo.** En el siguiente `pnpm dev` o `pnpm build` el plugin aparece automáticamente en el selector. No hay que modificar ningún otro archivo.
 
 ---
 
@@ -187,10 +173,10 @@ El dashboard espera que `onComplete` reciba un objeto con al menos `type`. El re
 
 ```js
 onComplete({
-  type: 'mi-plugin',       // obligatorio — identifica el plugin
-  sessionId: '...',        // recomendado
-  score: 87,               // opcional — lo que necesites
-  report: { ... },         // opcional
+  type: 'mi-plugin',   // obligatorio — identifica el plugin
+  sessionId: '...',    // recomendado
+  score: 87,           // opcional
+  report: { ... },     // opcional
 })
 ```
 
@@ -209,21 +195,17 @@ El dashboard redirige a la pantalla de email con cualquier resultado no-nulo, y 
 Dentro de cualquier plugin puedes acceder al contexto del dashboard:
 
 ```js
-import { usePluginSDK } from '@innovadef/plugin-sdk'
-// o con la ruta relativa si es módulo interno:
-// import { usePluginSDK } from '../plugins/PluginSDK'
+// Plugin externo
+import { usePluginSDK } from '@mi-plugin/../plugins/PluginSDK'
+// Módulo interno
+import { usePluginSDK } from '../plugins/PluginSDK'
 
 function MiComponente() {
   const { theme, sfx, onComplete, callApi } = usePluginSDK()
 
-  // Usar sonidos del sistema
-  sfx.sfxHover()
-
-  // Colores del tema
-  const { ACCENT, BORDER } = theme
-
-  // API backend (cuando esté disponible)
-  // await callApi('results/save', { score: 87 })
+  sfx.sfxHover()                          // sonidos del sistema
+  const { ACCENT, BORDER } = theme        // colores del tema
+  // await callApi('results/save', data)  // API backend (cuando esté disponible)
 }
 ```
 
@@ -236,9 +218,10 @@ function MiComponente() {
 git clone --recurse-submodules https://github.com/MartinSuarez-Pumpun/innovadef-demos.git
 cd innovadef-demos
 
-# 2. Instalar dependencias del plugin externo
-cd demo-aerocognitio && pnpm install && cd ..
-# (repetir para cada plugin externo que tengas)
+# 2. Instalar dependencias de cada plugin externo
+for dir in demo-*/; do
+  [ -f "$dir/package.json" ] && (cd "$dir" && pnpm install)
+done
 
 # 3. Arrancar el dashboard
 cd INNOVADEF-2026
@@ -246,15 +229,16 @@ pnpm install
 pnpm dev --host
 ```
 
-El plugin aparecerá en el selector junto al resto de módulos.
+Los plugins aparecerán en el selector automáticamente.
 
 ---
 
-## Checklist antes de entregar un plugin
+## Checklist antes de entregar un plugin externo
 
-- [ ] El componente exporta `default function MiPlugin({ onComplete })`
+- [ ] `plugin.json` tiene todos los campos: `id`, `code`, `label`, `desc`, `icon`, `color`, `category`, `tag`, `duration`, `status`
+- [ ] `icon` es un nombre válido de [lucide-react](https://lucide.dev/icons/)
+- [ ] `src/plugin.jsx` exporta `default function MiPlugin({ onComplete })`
 - [ ] Llama a `onComplete(result)` al terminar y `onComplete(null)` si cancela
-- [ ] Los estilos están aislados (no contamina el dashboard ni se rompe dentro de él)
-- [ ] Está registrado en `registry.js` con todos los campos
-- [ ] `pnpm build` en `INNOVADEF-2026` no da errores
-- [ ] Si es plugin externo: tiene `plugin.json` y `src/plugin.jsx`
+- [ ] Los estilos están aislados con una clase wrapper (no usa `:root`)
+- [ ] El directorio del repo empieza por `demo-` en `innovadef-demos`
+- [ ] `pnpm build` en `INNOVADEF-2026` no da errores tras añadir el submodulo

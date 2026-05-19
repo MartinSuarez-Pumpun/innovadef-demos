@@ -10,8 +10,8 @@ echo "→ Updating submodules..."
 git submodule update --remote --merge
 
 echo "→ Installing plugin dependencies..."
-for dir in demo-aerocognitio; do
-  if [ -d "$dir" ] && [ -f "$dir/package.json" ]; then
+for dir in demo-*/; do
+  if [ -f "$dir/package.json" ]; then
     echo "  pnpm install in $dir"
     (cd "$dir" && pnpm install)
   fi
