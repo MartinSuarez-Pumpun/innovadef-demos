@@ -32,5 +32,5 @@ jobs:
           git diff --quiet && git diff --staged --quiet || (
             git add .
             git commit -m "chore: sync submodules to latest [skip ci]"
-            git push
+            git pull --rebase && git push
           )
