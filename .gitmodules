@@ -6,3 +6,7 @@
 	path = INNOVADEF-2026
 	url = https://github.com/luismi7brmdz/INNOVADEF-2026.git
 	branch = main
+[submodule "demo-recruitment"]
+	path = demo-recruitment
+	url = https://github.com/MartinSuarez-Pumpun/demo-recruitment.git
+	branch = main
