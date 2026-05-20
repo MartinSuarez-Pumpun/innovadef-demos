@@ -7,6 +7,7 @@ echo "→ Pulling latest changes..."
 git pull
 
 echo "→ Updating submodules..."
+git submodule update --init --recursive
 git submodule update --remote --merge
 
 echo "→ Installing plugin dependencies..."
