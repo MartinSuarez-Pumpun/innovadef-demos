@@ -4,7 +4,7 @@
 set -e
 
 echo "→ Pulling latest changes..."
-git pull
+git pull --rebase
 
 echo "→ Updating submodules..."
 git submodule update --init --recursive
