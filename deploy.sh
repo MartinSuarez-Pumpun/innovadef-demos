@@ -18,6 +18,9 @@ for dir in demo-*/; do
   fi
 done
 
+echo "→ Installing server dependencies..."
+(cd INNOVADEF-2026/server && npm install --omit=dev)
+
 echo "→ Building INNOVADEF-2026..."
 (cd INNOVADEF-2026 && pnpm install && pnpm build)
 
