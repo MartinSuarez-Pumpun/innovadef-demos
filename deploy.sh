@@ -11,8 +11,8 @@ git submodule update --init --recursive
 git submodule update --remote --merge
 
 echo "→ Installing plugin dependencies..."
-for dir in demo-*/; do
-  if [ -f "$dir/package.json" ]; then
+for dir in */; do
+  if [ -f "$dir/plugin.json" ] && [ -f "$dir/package.json" ]; then
     echo "  pnpm install in $dir"
     (cd "$dir" && pnpm install)
   fi

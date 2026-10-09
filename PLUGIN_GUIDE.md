@@ -75,7 +75,7 @@ import { MiIcono } from 'lucide-react'   // cualquier icono de lucide-react
 ### 1. Estructura del repo del plugin
 
 ```
-demo-mi-plugin/
+mi-plugin/
 ├── src/
 │   ├── plugin.jsx      ← entry point obligatorio
 │   ├── plugin.css      ← estilos aislados (ver sección CSS)
@@ -155,13 +155,13 @@ Esto lo hace quien gestiona `innovadef-demos`, no el autor del plugin:
 
 ```bash
 cd innovadef-demos
-git submodule add https://github.com/org/mi-plugin.git demo-mi-plugin
-git add .gitmodules demo-mi-plugin
-git commit -m "feat: add demo-mi-plugin submodule"
+git submodule add https://github.com/org/mi-plugin.git mi-plugin
+git add .gitmodules mi-plugin
+git commit -m "feat: add mi-plugin submodule"
 git push
 ```
 
-**El directorio debe empezar por `demo-`** — es la convención que usa el auto-discovery.
+**El directorio puede llamarse como quieras** — el auto-discovery detecta cualquier directorio hermano de `INNOVADEF-2026` que tenga un `plugin.json` en la raíz.
 
 **Listo.** En el siguiente `pnpm dev` o `pnpm build` el plugin aparece automáticamente en el selector. No hay que modificar ningún otro archivo.
 
@@ -219,8 +219,8 @@ git clone --recurse-submodules https://github.com/MartinSuarez-Pumpun/innovadef-
 cd innovadef-demos
 
 # 2. Instalar dependencias de cada plugin externo
-for dir in demo-*/; do
-  [ -f "$dir/package.json" ] && (cd "$dir" && pnpm install)
+for dir in */; do
+  [ -f "$dir/plugin.json" ] && [ -f "$dir/package.json" ] && (cd "$dir" && pnpm install)
 done
 
 # 3. Arrancar el dashboard
@@ -240,5 +240,5 @@ Los plugins aparecerán en el selector automáticamente.
 - [ ] `src/plugin.jsx` exporta `default function MiPlugin({ onComplete })`
 - [ ] Llama a `onComplete(result)` al terminar y `onComplete(null)` si cancela
 - [ ] Los estilos están aislados con una clase wrapper (no usa `:root`)
-- [ ] El directorio del repo empieza por `demo-` en `innovadef-demos`
+- [ ] El `id` de `plugin.json` no coincide con el de otro plugin ya registrado
 - [ ] `pnpm build` en `INNOVADEF-2026` no da errores tras añadir el submodulo

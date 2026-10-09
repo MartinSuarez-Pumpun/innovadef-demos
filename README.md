@@ -8,7 +8,7 @@ Cada demo es un módulo independiente incluido como submódulo de git.
 | Módulo | Descripción | Estado |
 |--------|-------------|--------|
 | [INNOVADEF-2026](./INNOVADEF-2026) | INNOVADEF 2026 | ✅ Activo |
-| [demo-recruitment](./demo-recruitment) | demo recruitment | ✅ Activo |
+| [cloudminerva-captacion](./cloudminerva-captacion) | CloudMinerva captación | ✅ Activo |
 | [demo-aerocognitio](./demo-aerocognitio) | Batería psicotécnica para selección de personal RPAS — rotación mental 3D, orientación espacial, memoria táctica e informe IA | ✅ Activo |
 
 ---
